@@ -82,7 +82,7 @@ value ht_lookup(htable_t H, key k) {
  * If the key k is already in the table, the previously associated value is overrided with v
  * Additionally, the table resizes if table is already full.
  */
-void insert(htable_t H, key k, value v) {
+void ht_insert(htable_t H, key k, value v) {
   for (int i = hash_key(H, k); ; i++) {
     i = i & (H->capacity-1);
     if (H->table[i].k == EMPTY) {
