@@ -1,6 +1,7 @@
 #ifndef HASH_TABLE_H
 #define HASH_TABLE_H
 
+#include <atomic>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -27,7 +28,7 @@ struct table_entry {
 struct hash_table {
   uint32_t capacity;
   uint32_t size;
-	entry_t *table;
+	atomic<entry_t> *table;
   hash_fn hf;
 };
 
