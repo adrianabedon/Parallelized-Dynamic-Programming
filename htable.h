@@ -31,23 +31,24 @@ struct hash_table {
   hash_fn hf;
 };
 
+/* ht_new returns a hash table with an initial capacity = nextPow2(capacity) */ 
 htable_t ht_new(uint32_t capacity, hash_fn hf);
-//TODO: @requires capacity is a power of 2? or we can round up ourselves
+//@requires hf != NULL;
 //@ensures \result != NULL;
 
+/* Returns the value associated with the key k in the hash table */
 int ht_lookup(htable_t H, key k);
 //@requires H != NULL;
-//@ensures \result == EMPTY || \result >= 0;
+//@ensures \result == EMPTY || \result > 0;
 
+/* Inserts the key-value pair (k,v) into the hash table */
 void ht_insert(htable_t H, key k, value v);
 //@requires H != NULL;
 
 #endif
 
-
 /* RESOURCES REFERENCED:
-
-https://preshing.com/20130605/the-worlds-simplest-lock-free-hash-table/
-https://web.stanford.edu/class/ee380/Abstracts/070221_LockFreeHash.pdf
-https://github.com/aappleby/smhasher
+    https://preshing.com/20130605/the-worlds-simplest-lock-free-hash-table/
+    https://web.stanford.edu/class/ee380/Abstracts/070221_LockFreeHash.pdf
+    https://github.com/aappleby/smhasher
 */

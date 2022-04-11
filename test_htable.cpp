@@ -12,7 +12,7 @@
 Actions to test:
 - Inserting a key
 - Looking up the value of a key
-
+- Multi-threaded correctness (w/ reference to Dynamic Programming)
 */
 
 #define MAX_KEY 1000
@@ -115,5 +115,9 @@ int main(int argc, char *argv[]) {
   generate_instructions(instructions);
   generate_keys(test_keys);
 
-  test_htable_single_threaded(H, instructions, test_keys);
+  if (num_threads == 1) {
+    test_htable_single_threaded(H, instructions, test_keys);
+  }
+
+  printf("All test cases passed!\n");
 }
