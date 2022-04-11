@@ -113,3 +113,11 @@ void ht_insert(htable_t H, key k, value v) {
     }
   }
 }
+
+/*
+ * Frees the overall hash table struct and array of entries
+ */
+void ht_free(htable_t H) {
+  delete [] H->table;
+  delete H;
+}

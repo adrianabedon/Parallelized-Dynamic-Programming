@@ -119,5 +119,7 @@ int main(int argc, char *argv[]) {
     test_htable_single_threaded(H, instructions, test_keys);
   }
 
+  ht_free(H);
+
   printf("All test cases passed!\n");
 }

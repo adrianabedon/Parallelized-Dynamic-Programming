@@ -46,6 +46,10 @@ int ht_lookup(htable_t H, key k);
 void ht_insert(htable_t H, key k, value v);
 //@requires H != NULL;
 
+/* Frees the hash table and all underlying structures */
+void ht_free(htable_t H);
+//@requires H != NULL;
+
 #endif
 
 /* RESOURCES REFERENCED:
