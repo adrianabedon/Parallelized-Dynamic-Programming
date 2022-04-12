@@ -74,8 +74,7 @@ After completing our first milestone, we have revised our schedule to include mo
 ### March 27 - April 2
 - Begin work on implementing a lock free hash table. *(Nikita)*
 ### April 3 - 9
-~~- Optimize the performance of the hash table for dynamic programming work loads.~~
-  - Note: Moved to April 20 - 23
+~~- Optimize the performance of the hash table for dynamic programming work loads.~~ *(Moved to April 20 - 23)*
 - Begin implementing the framework for parallelizing general top down dynamic programs. *(Nikita)*
 ### April 10 - 13
 - Finish implementing the framework for parallelizing general top down dynamic programs. *(Nikita & Adrian)*
