@@ -56,4 +56,6 @@ void ht_free(htable_t H);
     https://preshing.com/20130605/the-worlds-simplest-lock-free-hash-table/
     https://web.stanford.edu/class/ee380/Abstracts/070221_LockFreeHash.pdf
     https://github.com/aappleby/smhasher
+    http://www.polarsparc.com/pdf/PThreads.pdf
+    https://www.cs.cmu.edu/afs/cs/academic/class/15492-f07/www/pthreads.html#SYNCHRONIZATION
 */
