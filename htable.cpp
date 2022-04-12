@@ -100,7 +100,7 @@ value ht_lookup(htable_t H, key k) {
 
 /*
  * Linearly probes through the table to insert key k in an EMPTY spot
- * If the key k is already in the table, the previously associated value is overrided with v
+ * Note: Assumes that each key has a unique value which is true for dynamic programming problems. 
  * Note: Table does not resize so table MUST be initialized with a large enough capacity
  */
 void ht_insert(htable_t H, key k, value v) {
