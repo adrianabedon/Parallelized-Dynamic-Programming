@@ -86,11 +86,11 @@ After completing our first milestone, we have revised our schedule to include mo
 ### April 20 - 23
 - Gather benchmarking data on DP on the PSC machines *(Adrian)*
 - Optimize hash table and DP solver to improve performance based on findings. *(Nikita & Adrian)*
-- *Strech* Implement various DP problems (knapsack, optimal BSTs, TSP, etc.) *(Adrian)*
+- *Strech:* Implement various DP problems (knapsack, optimal BSTs, TSP, etc.) *(Adrian)*
 ### April 24 - 27
 - Gather final speedup graphs and appropriate benchmarking data. *(Adrian)*
-- *Strech* Implement different hash tables (locking, separate chaining, etc.) *(Nikita)*
-- *Strech* Gather benchmarking data with all hash table implementations *(Nikita)*
+- *Strech:* Implement different hash tables (locking, separate chaining, etc.) *(Nikita)*
+- *Strech:* Gather benchmarking data with all hash table implementations *(Nikita)*
 ### April 27 - 29
 - Finalize report. *(Nikita & Adrian)*
 
@@ -98,8 +98,8 @@ After completing our first milestone, we have revised our schedule to include mo
 
 We have completed an initial implementation of a lock free hash table. We started by developing a linear-probing open addressing hash table that was not thread safe, and resized when the table was full. After thoroughly testing the single-threaded implementation, we began modifying our hash table to be thread safe while being lock free. To do so, we changed the type of our underlying table to C++'s `atomic` type. This then allowed us to use `compare_exhange_strong` which atomically swaps the entry in the table with the new entry if the slot was empty. We have thoroughly tested this lock-free hash table by inserting various keys simultaneously with multiple threads and asserting the table contains the correct entries. 
 
-As we better understand the depth of our project, we have posted a revised schedule above. In terms of our goals, we are still on track to achieving our 100% goal of implementing a lock free hash table, implementing the shortest path DP problem, and creating benchmarks for both implementations. The 125% goal of implementing other DP problems and analyzing them with other implementations of hash tables may not be within our reach given the short timespan of this project. 
+As we now better understand the depth of our project, we have posted a revised schedule above. In terms of our goals, we are still on track to achieving our 100% goal of implementing a lock free hash table, implementing the shortest path DP problem, and creating benchmarks for both implementations. The 125% goal of implementing other DP problems and analyzing them with other implementations of hash tables may not be within our reach given the short timespan of this project. 
 
 For our poster session, we plan to demonstrate an executable solving the shortest paths problem using a lock-free hash table. Along with the aforementioned demo, we plan to present graphs representing the various benchmarking we've performed with our DP algorithm and hash table. 
 
-In terms of issues, we are foreseeing that refinements to our lock-free hash table to include additional features will be difficult as features such as resizing/rehashing are challenging to program lock-free. In addition, developing a generic parallelized top down dynamic programming solver is challenging due to the high level of genericity we are aiming for. Currently, we're working on designing an effective framework for our generic solver. We hope to progress significantly on the latter issue this upcoming week and have tabled the refinements/other implementations of hash tables for a later time within the project. 
+In terms of issues, we foresee that refinements to our lock-free hash table to include additional features will be difficult. This is because features such as resizing/rehashing are challenging to program lock-free. Currently, we're working on designing an effective framework for our generic solver. As we progress on this objective, we're noting that developing a generic parallelized top down dynamic programming solver is challenging due to the high level of genericity we are aiming for. We hope to progress significantly on the latter issue this upcoming week and have tabled the refinements/other implementations of hash tables for a later time within the project. 
