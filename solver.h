@@ -1,4 +1,4 @@
-#include "htable/htable.h"
+#include "htable.h"
 
 #ifndef DP_SOLVER_H
 #define DP_SOLVER_H
