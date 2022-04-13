@@ -14,6 +14,7 @@ inline static uint32_t murmur_hash(key h) {
 
 /* INTERFACE FUNCTIONS */
 
+// TODO: currently single threaded --> change to multithreaded approach w/ a work queue?
 int solve(solver_t S, params p, int n, int m) {
   key k = S->gk(n, m, S->width);
   int result = ht_lookup(S->H, k);
