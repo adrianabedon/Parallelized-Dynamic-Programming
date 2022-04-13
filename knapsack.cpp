@@ -22,16 +22,16 @@ int recur(void *va) {
   }
   else if (a->sizes[a->k] > a->B) {
     printf("Too big for knapsack\n");
-    args b = {.k = a->k - 1, .B = a->B, .sizes = a->sizes, .values = a->values};
+    args b = {a->k - 1, a->B, a->sizes, a->values};
     return solve(S, &b, b.k, b.B);
   }
   else {
     printf("Trying to put it in knapsack\n");
-    args b = {.k = a->k - 1, .B = a->B - a->sizes[a->k], .sizes = a->sizes, .values = a->values};
+    args b = {a->k - 1, a->B - a->sizes[a->k], a->sizes, a->values};
     int x = solve(S, &b, b.k, b.B);
     
     printf("Trying without putting it in knapsack\n");
-    args c = {.k = a->k - 1, .B = a->B, .sizes = a->sizes, .values = a->values};
+    args c = {a->k - 1, a->B, a->sizes, a->values};
     int y = solve(S, &c, c.k, c.B);
 
     return max(a->values[a->k] + x, y);
@@ -42,7 +42,7 @@ int main() {
   int sizes[6] = {10, 20, 30};
   int values[6] = {60, 100, 120};
   int w = 3;
-  args b = {.k = 3, .B = 50, .sizes = sizes, .values = values};
+  args b = {3, 50, sizes, values};
   S = dp_solver_new(recur, gk, w, b.k, b.B);
   printf("Result: %d\n", solve(S, &b, b.k, b.B));
   delete S;
