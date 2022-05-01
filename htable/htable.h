@@ -7,7 +7,8 @@
 #include <string.h>
 #include <stdint.h>
 
-#define EMPTY 0
+#define EMPTY -1
+#define TABLE_FULL -1
 
 using namespace std;
 
@@ -21,14 +22,14 @@ typedef int value;
 typedef uint32_t (*hash_fn) (key);
 
 struct table_entry {
-  key k;
+  atomic<key> k;
   value v;
 };
 
 struct hash_table {
   uint32_t capacity;
   uint32_t size;
-	atomic<entry_t> *table;
+  entry_t *table;
   hash_fn hf;
 };
 

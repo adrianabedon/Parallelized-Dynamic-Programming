@@ -175,7 +175,7 @@ inline static uint32_t murmur_hash(key h) {
 int main(int argc, char *argv[]) {
   char *inputFilename = NULL;
   int num_threads = 1;
-  int capacity = 256;
+  int capacity = 5000;
   int opt = 0;
   int num_instructions = 2500;
 

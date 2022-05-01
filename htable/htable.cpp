@@ -15,11 +15,11 @@ uint32_t next_pow_2(uint32_t n) {
     n++;
     return n;
 }
+/*
 
-/* 
  * Rehashes all old table entries to the new table
  * Note: Currently unused since table does not resize
- */
+ 
 void reshash_entries(htable_t old_ht, htable_t new_ht) {
   for (int i = 0; i < old_ht->capacity; i++) {
     entry_t entry = old_ht->table[i].load();
@@ -29,11 +29,11 @@ void reshash_entries(htable_t old_ht, htable_t new_ht) {
   }
 }
 
-/* 
+
  * Checks if the table needs to be resized, 
  * and if so, resizes table to the next power of 2 
  * Note: Currently unused since table does not resize
- */
+
 void perform_resize_if_necessary(htable_t H) {
   // TODO: change this to resize according to a load factor
   if (H->size == H->capacity) {
@@ -57,6 +57,7 @@ void perform_resize_if_necessary(htable_t H) {
     delete new_ht;
   }
 }
+*/
 
 /*
  * Hashes key k with the hash function provided by the client
@@ -74,9 +75,73 @@ htable_t ht_new(uint32_t capacity, hash_fn hf) {
   htable_t H = new hash_table;
   H->capacity = next_pow_2(capacity);
   H->size = 0;
-  H->table = new atomic<entry_t>[H->capacity];
+	H->table = new entry_t[H->capacity];
+
+	// Initialize table with EMPTY keys and values
+	for (int i = 0; i < H->capacity; i++) {
+	  H->table[i].k.store(EMPTY);
+		H->table[i].v = EMPTY;
+	}
+
   H->hf = hf;
   return H;
+}
+
+/*
+ * Returns the index of the entry with key k or the next EMPTY entry
+ * Note: If table is full, returns TABLE_FULL
+ */
+int get_index_entry(htable_t H, key k) {
+	int i = hash_key(H, k, H->capacity);
+	entry_t *entry = &(H->table[i]);
+	// Probes from the beginning of the hash
+	uint32_t probes = 0;
+	while (probes < H->capacity - 1 && entry->k.load() != k && entry->k.load() != EMPTY) {
+	  probes += 1;
+		i = (i + 1) & (H->capacity-1);
+		entry = &(H->table[i]);
+	}
+	if (probes >= H->capacity-1) 
+	  return TABLE_FULL;
+	else
+    return i;
+}
+
+/*
+ * Linearly probes through the table to insert key k in an EMPTY spot
+ * Note: Assumes that each key has a unique value which is true for dynamic programming problems
+ * Note: Table does not resize so table MUST be initialized with a large enough capacity
+ * Note: If two threads try to insert the same value, get_index_entry reprobes the table to avoid duplicate keys
+ */
+void ht_insert(htable_t H, key k, value v) {
+  while (true) {
+    int i = get_index_entry(H, k);
+	
+	  if (i == TABLE_FULL) {
+	    printf("ERROR: hash table full\n");
+	    return;
+	  }
+
+	  entry_t *entry = &(H->table[i]);
+		key key_in_table = entry->k.load();
+		
+		// Overwrite value if key in table is the key we're inserting
+		if (key_in_table == k) {
+		  entry->v = v;
+			return;
+		}
+
+		// If key in table is empty, check if we can swap in the new key
+	  if (key_in_table == EMPTY) {
+			key empty = EMPTY;
+	    if (atomic_compare_exchange_strong(&(entry->k), &empty, k)) {
+				// Swap succeeded! Insert corresponding value
+		    entry->v = v;
+			  return;
+		  }
+			// Swap failed. Another thread beat us, try again with the next entry.
+	  }
+	}
 }
 
 /*
@@ -88,28 +153,13 @@ htable_t ht_new(uint32_t capacity, hash_fn hf) {
 value ht_lookup(htable_t H, key k) {
   for (int i = hash_key(H, k, H->capacity); ; i++) {
     i = i & (H->capacity-1);
-    entry_t entry = H->table[i].load();
-    if (entry.k == k) {
-      return entry.v;
+    entry_t *entry = &(H->table[i]);
+		key key_in_table = entry->k.load();
+    if (key_in_table == k) {
+      return entry->v;
     }
-    if (entry.k == EMPTY) {
+    if (key_in_table == EMPTY) {
       return EMPTY;
-    }
-  }
-}
-
-/*
- * Linearly probes through the table to insert key k in an EMPTY spot
- * Note: Assumes that each key has a unique value which is true for dynamic programming problems. 
- * Note: Table does not resize so table MUST be initialized with a large enough capacity
- */
-void ht_insert(htable_t H, key k, value v) {
-  for (int i = hash_key(H, k, H->capacity); ; i++) {
-    i = i & (H->capacity-1);
-    entry_t desired_entry = {.k = k, .v = v};
-    entry_t expected_entry = {.k = EMPTY, .v = EMPTY};    
-    if (H->table[i].compare_exchange_strong(expected_entry, desired_entry)) {
-      return;
     }
   }
 }
