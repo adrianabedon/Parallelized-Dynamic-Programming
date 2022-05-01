@@ -1,0 +1,1 @@
+g++ -g -std=c++11 -lpthread -pedantic -Wall -Wextra -Werror -Wshadow -Wconversion -Wunreachable-code htable/htable.cpp knapsack.cpp

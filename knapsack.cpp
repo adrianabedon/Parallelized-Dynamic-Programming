@@ -1,4 +1,4 @@
-#include "htable.h"
+#include "htable/htable.h"
 #include <vector>
 #include <algorithm>
 #include <utility>
@@ -23,7 +23,7 @@ int get_key(subp_t problem, int max_weight) {
   return problem.n*(max_weight+1)+problem.w;
 }
 
-int knapsack(htable_t H, int max_weight, vector<int> weights, vector<int> values, int size_of_sack) {
+int knapsack(htable_t H, int max_weight, vector<int> &weights, vector<int> &values, int size_of_sack) {
   random_device dev;
   mt19937 rng(dev());
   uniform_int_distribution<mt19937::result_type> rand_indx(0,1);
@@ -76,7 +76,7 @@ int knapsack(htable_t H, int max_weight, vector<int> weights, vector<int> values
     
     
     // for other types of problems do with loop
-    int random = rand_indx(rng);
+    int random = (int)rand_indx(rng);
     if(random == 0) {
       jobs.push_back(job_t());
       job_t *new_job = &jobs.back();
@@ -107,4 +107,23 @@ int knapsack(htable_t H, int max_weight, vector<int> weights, vector<int> values
       new_job->waiting_for_results = false;
     }
   }
+  return output_result;
+}
+
+inline static uint32_t murmur_hash(key_t h) {
+  h ^= h >> 16;
+  h *= 0x85ebca6b;
+  h ^= h >> 13;
+  h *= 0xc2b2ae35;
+  h ^= h >> 16;
+
+  return h;
+}
+
+int main() {
+  htable_t H = ht_new(10000, murmur_hash);
+  vector<int> weights{10, 20, 30};
+  vector<int> values{60, 100, 120};
+  printf("result: %d\n", knapsack(H, 50, weights, values, 3));
+  return 0;
 }
