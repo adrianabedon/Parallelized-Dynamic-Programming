@@ -6,8 +6,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <limits.h>
 
-#define EMPTY -1
+#define EMPTY INT_MIN
 #define TABLE_FULL -1
 
 using namespace std;
