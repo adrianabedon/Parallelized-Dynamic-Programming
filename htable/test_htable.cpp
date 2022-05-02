@@ -63,7 +63,7 @@ void test_htable_single_threaded(htable_t H, int num_instructions) {
   generate_instructions(instructions);
   generate_keys(test_keys);
 
-  for (int i = 0; i < instructions.size(); i++) {
+  for (uint32_t i = 0; i < instructions.size(); i++) {
     switch(instructions[i]) {
       case INSERT:
         printf("INSERTING %d\n", test_keys[i]); 
@@ -91,14 +91,14 @@ void test_htable_single_threaded(htable_t H, int num_instructions) {
 }
 
 void append_vectors(vector<int> &v1, vector<int> &v2) {
-  for (int i = 0; i < v2.size(); i++) {
+  for (uint32_t i = 0; i < v2.size(); i++) {
     v1.push_back(v2[i]);
   }
 }
 
 void print_vector(vector<int> v) {
   printf("vector: ");
-  for (int i = 0; i < v.size(); i++) {
+  for (uint32_t i = 0; i < v.size(); i++) {
     printf("%d ", v[i]);
   }  
   printf("\n");
@@ -106,7 +106,7 @@ void print_vector(vector<int> v) {
 
 vector<int> flatten(vector<vector<int> > &vec) {
   vector<int> flattened;
-  for (int i = 0; i < vec.size(); i++) {
+  for (uint32_t i = 0; i < vec.size(); i++) {
     flattened.insert(flattened.end(), vec[i].begin(), vec[i].end());
   }
   return flattened;
@@ -118,7 +118,7 @@ void *single_threaded_actions(void *td) {
   vector<int> test_keys = data->test_keys;
   // print_vector(test_keys);
   
-  for (int i = 0; i < test_keys.size(); i++) {
+  for (uint32_t i = 0; i < test_keys.size(); i++) {
     ht_insert(H, test_keys[i], test_keys[i]);
     // printf("INSERTING %d\n", test_keys[i]);
     assert(ht_lookup(H, test_keys[i]) == test_keys[i]);
@@ -139,7 +139,7 @@ void test_htable_multi_threaded(htable_t H, int num_inserts, int num_threads) {
   }
 
   // Spawn threads for insertion of keys
-  pthread_t threads[num_threads];
+  vector<pthread_t> threads(num_threads);
   for (int i = 0; i < num_threads; i++) {
     // Have each thread insert keys into the hash table
     td[i].H = H;
@@ -157,12 +157,12 @@ void test_htable_multi_threaded(htable_t H, int num_inserts, int num_threads) {
 
   // After all threads are done, assert that all keys have been inserted into the table
   vector<int> flattened = flatten(all_keys);
-  for (int i = 0; i < flattened.size(); i++) {
+  for (uint32_t i = 0; i < flattened.size(); i++) {
     assert(ht_lookup(H, flattened[i]) == flattened[i]);
   }
 }
 
-inline static uint32_t murmur_hash(key h) {
+inline static uint32_t murmur_hash(key_t h) {
   h ^= h >> 16;
   h *= 0x85ebca6b;
   h ^= h >> 13;
@@ -173,7 +173,7 @@ inline static uint32_t murmur_hash(key h) {
 }
 
 int main(int argc, char *argv[]) {
-  char *inputFilename = NULL;
+  // char *inputFilename = NULL;
   int num_threads = 1;
   int capacity = 5000;
   int opt = 0;
@@ -183,9 +183,9 @@ int main(int argc, char *argv[]) {
   do {
     opt = getopt(argc, argv, "f:n:c:i:");
     switch (opt) {
-    case 'f':
-      inputFilename = optarg;
-      break;
+    // case 'f':
+    //   inputFilename = optarg;
+    //   break;
     case 'n':
       num_threads = atoi(optarg);
       break;
