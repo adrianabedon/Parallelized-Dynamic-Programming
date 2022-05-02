@@ -26,6 +26,10 @@ $(TARGETS) : %.cpp : $(OBJS)
 test_htable.cpp : %.cpp : $(HTABLE).cpp $(HTABLE).o
 		$(CXX) $(CXXFLAGS) -o $*.out htable/test_htable.cpp $(HTABLE).o
 
+# To use: % make knapsack_test_gen.cpp
+# knapsack_test_gen.cpp
+# 		$(CXX) $(CXXFLAGS) -o $*.out
+
 # Compiles all object files (internally used)
 %.o : %.cpp %.h
 		$(CXX) $(CXXFLAGS) -o $@ -c $<

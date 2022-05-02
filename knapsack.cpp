@@ -6,7 +6,15 @@
 #include <random>
 #include <iostream>
 #include <cmath>
+#include <chrono>
+#include <unistd.h>
+
+// #define TIME_CODE
+
 using namespace std;
+using namespace std::chrono;
+typedef std::chrono::high_resolution_clock Clock;
+typedef std::chrono::duration<double> dsec;
 
 typedef struct {
   int n;
@@ -20,11 +28,24 @@ typedef struct {
   vector<int> results;
 } job_t;
 
-int get_key(subp_t problem, int max_weight) {
-  return problem.n*(max_weight+1)+problem.w;
+typedef struct {
+  pthread_cond_t *cond;
+  pthread_mutex_t *mutex;
+  int *done_thread;
+  int thread_id;
+  int *write_result;
+  htable_t H;
+  int capacity;
+  vector<int> weights;
+  vector<int> values;
+  int num_obj;
+} thread_arg_t;
+
+int get_key(subp_t problem, int capacity) {
+  return problem.n*(capacity+1)+problem.w;
 }
 
-int knapsack(htable_t H, int max_weight, vector<int> &weights, vector<int> &values, int size_of_sack) {
+int knapsack(htable_t H, int capacity, vector<int> &weights, vector<int> &values, int num_obj) {
   random_device dev;
   mt19937 rng(dev());
   uniform_int_distribution<mt19937::result_type> rand_indx(0,1);
@@ -32,22 +53,36 @@ int knapsack(htable_t H, int max_weight, vector<int> &weights, vector<int> &valu
   int output_result;
   vector<job_t> jobs;
   jobs.push_back(job_t());
-  jobs.back().problem.n = size_of_sack;
-  jobs.back().problem.w = max_weight;
+  jobs.back().problem.n = num_obj;
+  jobs.back().problem.w = capacity;
   jobs.back().write_result = &output_result;
   jobs.back().waiting_for_results = false;
+
+  #ifdef TIME_CODE
+  double total_lookup_time = 0;
+  double total_job_time = 0;
+  double total_insertion_time = 0;
+  #endif
 
   while(true) 
   {
     size_t curr_idx = jobs.size() - 1;
-    int key = get_key(jobs[curr_idx].problem, max_weight);
+    int key = get_key(jobs[curr_idx].problem, capacity);
     int best;
     /* Check if waiting for results (was already called and subproblems were
      * pushed to the stack)*/
     if(jobs[curr_idx].waiting_for_results) 
     {
       best = max(values[jobs[curr_idx].problem.n-1]+jobs[curr_idx].results[0], jobs[curr_idx].results[1]);
+      #ifdef TIME_CODE
+      auto start = Clock::now();
       ht_insert(H, key, best);
+      auto end = Clock::now();
+      total_insertion_time += duration_cast<dsec>(end - start).count();
+      #else
+      ht_insert(H, key, best);
+      #endif
+
       assert(best != EMPTY);
     } 
     else if(jobs[curr_idx].problem.n == 0 || jobs[curr_idx].problem.w == 0) 
@@ -56,7 +91,14 @@ int knapsack(htable_t H, int max_weight, vector<int> &weights, vector<int> &valu
     }
     else 
     {
+      #ifdef TIME_CODE
+      auto start = Clock::now();
       best = ht_lookup(H, key);
+      auto end = Clock::now();
+      total_lookup_time += duration_cast<dsec>(end - start).count();
+      #else
+      best = ht_lookup(H, key);
+      #endif
     }
 
     if(best != EMPTY) {
@@ -69,7 +111,9 @@ int knapsack(htable_t H, int max_weight, vector<int> &weights, vector<int> &valu
     }
 
     /* Add new job */
-
+    #ifdef TIME_CODE
+    auto start = Clock::now();
+    #endif
     jobs[curr_idx].waiting_for_results = true;
     jobs[curr_idx].results.resize(2);
     
@@ -109,8 +153,15 @@ int knapsack(htable_t H, int max_weight, vector<int> &weights, vector<int> &valu
       } else {
         jobs[curr_idx].results[0] = INT_MIN;
       }
+      #ifdef TIME_CODE
+      auto end = Clock::now();
+      total_job_time += duration_cast<dsec>(end - start).count();
+      #endif
     }
   }
+  #ifdef TIME_CODE
+  printf("ht_lookup: %lf & job add: %lf & ht_insert %lf\n", total_lookup_time, total_job_time, total_insertion_time);
+  #endif
   return output_result;
 }
 
@@ -124,41 +175,137 @@ inline static uint32_t murmur_hash(key_t h) {
   return h;
 }
 
-int main() {
-  htable_t H = ht_new(67108864, murmur_hash);
-  // output 220
-  // vector<int> weights{10, 20, 30};
-  // vector<int> values{60, 100, 120};
-  // int cap = 50;
+void *thread_routine(void *in_args) {
+  thread_arg_t *args = (thread_arg_t *)in_args;
+  int res = knapsack(args->H, args->capacity, args->weights, args->values, args->num_obj);
+  
+  
+  *(args->write_result) = res;
+  pthread_mutex_lock(args->mutex);
+  *args->done_thread = args->thread_id;
+  pthread_mutex_unlock(args->mutex);
+  pthread_cond_signal(args->cond);
 
-  // output 295
-  // vector<int> weights{95, 4, 60, 32, 23, 72, 80, 62, 65, 46};
-  // vector<int> values{55, 10, 47, 5, 4, 50, 8, 61, 85, 87};
-  // int cap = 269;
+  return (void *)0;
+}
 
-  // output 1024
-  // vector<int> weights{92, 4, 43, 83, 84, 68, 92, 82, 6, 44, 32, 18, 56, 83, 25, 96, 70, 48, 14, 58};
-  // vector<int> values{44, 46, 90, 72, 91, 40, 75, 35, 8, 54, 78, 40, 77, 15, 61, 17, 75, 29, 75, 63};
-  // int cap = 878;
+void read_test_case(char *input_filename, int *capacity, int *num_objects, vector<int> &values, vector<int> &weights, int *refsol) {
+  FILE *input = fopen(input_filename, "r");
 
-  // 15,170
-  vector<int> weights{54, 95, 36, 18, 4, 71, 83, 16, 27, 84, 88, 45, 94, 64, 14, 80, 4, 23,
-    75, 36, 90, 20, 77, 32, 58, 6, 14, 86, 84, 59, 71, 21, 30, 22, 96, 49, 81,
-    48, 37, 28, 6, 84, 19, 55, 88, 38, 51, 52, 79, 55, 70, 53, 64, 99, 61, 86,
-    1, 64, 32, 60, 42, 45, 34, 22, 49, 37, 33, 1, 78, 43, 85, 24, 96, 32, 99,
-    57, 23, 8, 10, 74, 59, 89, 95, 40, 46, 65, 6, 89, 84, 83, 6, 19, 45, 59,
-    26, 13, 8, 26, 5, 9};
-  vector<int> values{297, 295, 293, 292, 291, 289, 284, 284, 283, 283, 281, 280, 279,
-    277, 276, 275, 273,264, 260, 257, 250, 236, 236, 235, 235, 233, 232,
-    232, 228, 218, 217, 214, 211, 208, 205, 204, 203, 201, 196, 194, 193,
-    193, 192, 191, 190, 187, 187, 184, 184, 184, 181, 179, 176, 173, 172,
-    171, 160, 128, 123, 114, 113, 107, 105, 101, 100, 100, 99, 98, 97, 94,
-    94, 93, 91, 80, 74, 73, 72, 63, 63, 62, 61, 60, 56, 53, 52, 50, 48, 46,
-    40, 40, 35, 28, 22, 22, 18, 15, 12, 11, 6, 5};
-  int cap = 3818;
+  if (input == NULL) {
+    printf("Failed to open file %s\n", input_filename);
+    return;
+  }
 
+  // Read in capacity and num_objects
+  fscanf(input, "%d\n", capacity);
+  fscanf(input, "%d\n", num_objects);
+
+  // Read in values
+  for (int i = 0; i < *num_objects; i++) {
+    int v;
+    fscanf(input, "%d\n", &v);
+    values.push_back(v);
+  }
+
+  // Read in weights
+  for (int i = 0; i < *num_objects; i++) {
+    int w;
+    fscanf(input, "%d\n", &w);
+    weights.push_back(w);
+  }
+
+  // Read in the reference solution
+  fscanf(input, "%d\n", refsol);
+
+  // Close file
+  fclose(input);
+}
+
+int main(int argc, char *argv[]) {
+  int opt;
+  int num_threads = 1;
+  char *input_filename = NULL;
+  do {
+    opt = getopt(argc, argv, "n:f:");
+    switch (opt) {
+    case 'f':
+      input_filename = optarg;
+      break;
+    case 'n':
+      num_threads = atoi(optarg);
+      break;
+    case -1:
+      break;
+    default:
+      break;
+    }
+  } while (opt != -1);
+
+  int capacity;
+  int num_objects;
+  vector<int> values;
+  vector<int> weights;
+  int refsol;
+
+  read_test_case(input_filename, &capacity, &num_objects, values, weights, &refsol);
+
+  htable_t H = ht_new(1000000, murmur_hash);
+  
   assert(weights.size() == values.size());
-  printf("result: %d\n", knapsack(H, cap, weights, values, (int)weights.size()));
+  pthread_cond_t cond;
+  pthread_mutex_t mutex;
+  int done_thread = -1;
+  assert(pthread_cond_init(&cond, NULL) == 0);
+  assert(pthread_mutex_init(&mutex, NULL) == 0);
+
+  // TIME ENTRY
+  auto start = std::chrono::high_resolution_clock::now();
+
+  // Spawn threads to all compute the knapsack problem
+  vector<pthread_t> threads(num_threads);
+  thread_arg_t *td = new thread_arg_t[num_threads];
+  int *results = new int[num_threads];
+  for (int i = 0; i < num_threads; i++) {
+    td[i].cond = &cond;
+    td[i].mutex = &mutex;
+    td[i].done_thread = &done_thread;
+    td[i].thread_id = i;
+    td[i].H = H;
+    td[i].write_result = &results[i];
+    td[i].capacity = capacity;
+    td[i].weights = weights;
+    td[i].values = values;
+    td[i].num_obj = num_objects;
+    pthread_create(&threads[i], NULL, thread_routine, &td[i]);
+  }
+
+  // Wait for one thread to finish execution
+  int final_result;
+  int final_thread_done;
+  pthread_mutex_lock(&mutex);
+  while(done_thread == -1) {
+    pthread_cond_wait(&cond, &mutex);
+  }
+
+  final_thread_done = done_thread;
+  final_result = results[done_thread];
+  pthread_mutex_unlock(&mutex);
+
+  // TIME EXIT
+  auto end = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double, std::milli> float_ms = end - start;
+
+  // Printing results
+  printf("Reference Solution: %d\n", refsol);
+  printf("thread %d result: %d in %lf milliseconds\n", final_thread_done, final_result, float_ms.count());
+  assert(refsol == final_result);
+  printf("Results matched!\n");
+
+  // Cleanup
   ht_free(H);
+  delete [] results;
+  pthread_cond_destroy(&cond);
+  pthread_mutex_destroy(&mutex);
   return 0;
 }
