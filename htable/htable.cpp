@@ -59,6 +59,23 @@ void perform_resize_if_necessary(htable_t H) {
 }
 */
 
+bool ht_no_dupes(htable_t H) {
+  for (uint32_t i = 0; i < H->capacity; i++) {
+    key_t u = H->table[i].k.load();
+    if (u == EMPTY) continue;
+    for (uint32_t j = i+1; j < H->capacity; j++) {
+      key_t v = H->table[j].k.load();
+      // found dupe
+      if (u == v) {
+        printf("Found duplicate key %d at (%d, %d)\n", u, i, j);
+        return false;
+      }
+    }
+  }
+  // did not find any dupes in the table 
+  return true;
+}
+
 /*
  * Hashes key k with the hash function provided by the client
  */
@@ -96,15 +113,21 @@ int get_index_entry(htable_t H, key_t k) {
 	entry_t *entry = &(H->table[i]);
 	// Probes from the beginning of the hash
 	uint32_t probes = 0;
-	while (probes < H->capacity - 1 && entry->k.load() != k && entry->k.load() != EMPTY) {
+
+  key_t key_in_table = entry->k.load();
+	while (probes < H->capacity - 1 && key_in_table != k && key_in_table != EMPTY) {
 	  probes += 1;
 		i = (i + 1) & (H->capacity-1);
 		entry = &(H->table[i]);
+    key_in_table = entry->k.load();
 	}
 	if (probes >= H->capacity-1) 
 	  return TABLE_FULL;
-	else
+	else {
     return i;
+  }
+  
+    
 }
 
 /*
@@ -116,7 +139,7 @@ int get_index_entry(htable_t H, key_t k) {
 void ht_insert(htable_t H, key_t k, value_t v) {
   while (true) {
     int i = get_index_entry(H, k);
-	
+
 	  if (i == TABLE_FULL) {
 	    printf("ERROR: hash table full\n");
 	    return;
@@ -134,6 +157,7 @@ void ht_insert(htable_t H, key_t k, value_t v) {
 		// If key in table is empty, check if we can swap in the new key
 	  if (key_in_table == EMPTY) {
 			key_t empty = EMPTY;
+      // args: memory location to insert into, expected value at that location, desired value to be exchanged in
 	    if (atomic_compare_exchange_strong(&(entry->k), &empty, k)) {
 				// Swap succeeded! Insert corresponding value
 		    entry->v = v;

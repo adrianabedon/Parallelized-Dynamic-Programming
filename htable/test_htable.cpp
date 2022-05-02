@@ -32,10 +32,11 @@ struct thread_data {
 };
 
 Instruction random_instruction() {
-  if (rand() % 2 == 0) {
-    return INSERT;
-  } 
-  return LOOKUP;
+  // if (rand() % 2 == 0) {
+  //   return INSERT;
+  // } 
+  // return LOOKUP;
+  return INSERT;
 }
 
 void generate_instructions(vector<Instruction> &instructions) {
@@ -47,7 +48,10 @@ int random_key() {
 }
 
 void generate_keys(vector<int> &test_keys) {
-  generate(test_keys.begin(), test_keys.end(), random_key);
+  // generate(test_keys.begin(), test_keys.end(), random_key);
+  for(uint32_t i = 0 ; i < test_keys.size() ; i++) {
+    test_keys[i] = i ;
+  }
 }
 
 // performs n/d but rounds up
@@ -153,13 +157,15 @@ void test_htable_multi_threaded(htable_t H, int num_inserts, int num_threads) {
   }
   // Free allocated thread data
   delete [] td;
-  // printf("ALL THREADS FINISHED INSERTION\n");
+  printf("ALL THREADS FINISHED INSERTION\n");
 
   // After all threads are done, assert that all keys have been inserted into the table
   vector<int> flattened = flatten(all_keys);
   for (uint32_t i = 0; i < flattened.size(); i++) {
     assert(ht_lookup(H, flattened[i]) == flattened[i]);
   }
+
+  assert(ht_no_dupes(H));
 }
 
 inline static uint32_t murmur_hash(key_t h) {
@@ -177,7 +183,7 @@ int main(int argc, char *argv[]) {
   int num_threads = 1;
   int capacity = 5000;
   int opt = 0;
-  int num_instructions = 2500;
+  int num_instructions = 4000;
 
   // Read command line arguments
   do {

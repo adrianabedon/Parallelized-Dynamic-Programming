@@ -52,6 +52,8 @@ void ht_insert(htable_t H, key_t k, value_t v);
 void ht_free(htable_t H);
 //@requires H != NULL;
 
+bool ht_no_dupes(htable_t H);
+
 #endif
 
 /* RESOURCES REFERENCED:
