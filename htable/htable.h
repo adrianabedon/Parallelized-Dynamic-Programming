@@ -6,8 +6,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <limits.h>
 
-#define EMPTY -1
+#define EMPTY INT_MIN
 #define TABLE_FULL -1
 
 using namespace std;
@@ -16,14 +17,14 @@ typedef struct hash_table *htable_t;
 typedef struct table_entry entry_t;
 
 // keys and values are primitive types
-typedef int key;
-typedef int value;
+typedef int key_t;
+typedef int value_t;
 
-typedef uint32_t (*hash_fn) (key);
+typedef uint32_t (*hash_fn) (key_t);
 
 struct table_entry {
-  atomic<key> k;
-  value v;
+  atomic<key_t> k;
+  value_t v;
 };
 
 struct hash_table {
@@ -39,17 +40,19 @@ htable_t ht_new(uint32_t capacity, hash_fn hf);
 //@ensures \result != NULL;
 
 /* Returns the value associated with the key k in the hash table */
-int ht_lookup(htable_t H, key k);
+int ht_lookup(htable_t H, key_t k);
 //@requires H != NULL;
 //@ensures \result == EMPTY || \result > 0;
 
 /* Inserts the key-value pair (k,v) into the hash table */
-void ht_insert(htable_t H, key k, value v);
+void ht_insert(htable_t H, key_t k, value_t v);
 //@requires H != NULL;
 
 /* Frees the hash table and all underlying structures */
 void ht_free(htable_t H);
 //@requires H != NULL;
+
+bool ht_no_dupes(htable_t H);
 
 #endif
 
