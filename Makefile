@@ -3,7 +3,7 @@
 CXX = g++
 CXXFLAGS = -g -std=c++11 -lpthread -pedantic -Wall -Wextra -Werror -Wconversion -Wshadow -Wunreachable-code
 OBJS = htable/htable.o
-TARGETS = knapsack.cpp
+TARGETS = knapsack.cpp bellman.cpp
 HTABLE = htable/htable
 
 .PHONY: clean test_htable.cpp $(TARGETS)
