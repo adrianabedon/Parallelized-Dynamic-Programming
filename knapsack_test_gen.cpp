@@ -41,17 +41,17 @@ int ref_knapsack(int W, vector<int> wt, vector<int> val, int n)
 }
 
 int main() {
-    int num_obj = 100;
-    int capacity = 400;
+    int num_obj = 5000;
+    int capacity = 12000;
     char *test_name = new char[100];
-    sprintf(test_name, "tests/knapsack/knapsack_%d_%d.txt", num_obj, capacity);
+    sprintf(test_name, "tests/knapsack/knapsack_%d_%d_2.txt", num_obj, capacity);
     FILE *file = fopen(test_name, "w");
     assert(file != NULL);
 
     random_device dev;
     mt19937 rng(dev());
     uniform_int_distribution<mt19937::result_type> rand_value(1,1000);
-    uniform_int_distribution<mt19937::result_type> rand_weight(1,300);
+    uniform_int_distribution<mt19937::result_type> rand_weight(500,1000);
 
     vector<int> wt;
     vector<int> val;
