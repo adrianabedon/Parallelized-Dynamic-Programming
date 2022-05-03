@@ -277,7 +277,6 @@ int main(int argc, char *argv[]) {
   // TIME ENTRY
   
   bool should_start = false;
-  auto start = std::chrono::high_resolution_clock::now();
   // Spawn threads to all compute the knapsack problem
   vector<pthread_t> threads(num_threads);
   thread_arg_t *td = new thread_arg_t[num_threads];
@@ -299,6 +298,7 @@ int main(int argc, char *argv[]) {
     pthread_create(&threads[i], NULL, thread_routine, &td[i]);
   }
   pthread_mutex_lock(&mutex_start);
+  auto start = std::chrono::high_resolution_clock::now();
   should_start = true;
   pthread_mutex_unlock(&mutex_start);
   pthread_cond_broadcast(&cond_start);
