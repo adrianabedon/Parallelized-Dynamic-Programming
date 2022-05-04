@@ -1,0 +1,16 @@
+#!/bin/sh
+
+FILES="tests/bellman/bellman_100_7425.txt tests/bellman/bellman_200_29850.txt tests/bellman/bellman_400_119700.txt tests/bellman/bellman_1000_748966.txt"
+NThreads="1 4 16 64 128"
+
+for file in $FILES
+do
+  for nthread in $NThreads
+  do 
+    echo ========================================================
+    echo RUNNING ./bellman -n $nthread -f $file  
+    ./bellman -n $nthread -f $file
+    echo COMPLETE
+    echo ========================================================
+  done
+done
