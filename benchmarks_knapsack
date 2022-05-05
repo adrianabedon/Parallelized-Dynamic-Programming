@@ -1,0 +1,16 @@
+#!/bin/sh
+
+KNAPFILES="tests/knapsack/knapsack_100_400.txt tests/knapsack/knapsack_1000_4000.txt tests/knapsack/knapsack_2000_8000.txt tests/knapsack/knapsack_5000_12000.txt"
+NThreads="1 4 16 64 128"
+
+for file in $KNAPFILES
+do
+  for nthread in $NThreads
+  do 
+    echo ========================================================
+    echo RUNNING ./knapsack -n $nthread -f $file  
+    ./knapsack -n $nthread -f $file
+    echo COMPLETE
+    echo ========================================================
+  done
+done

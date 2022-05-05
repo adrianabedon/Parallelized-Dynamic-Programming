@@ -8,6 +8,7 @@
 #include <cmath>
 #include <chrono>
 #include <unistd.h>
+#include <math.h>
 
 // #define TIME_CODE
 
@@ -48,6 +49,10 @@ typedef struct {
   graph_t *G;
   int source;
   int dest;
+
+  pthread_cond_t *cond_start;
+  pthread_mutex_t *mutex_start;
+  bool *start;
 } thread_arg_t;
 
 int get_key(subp_t problem, int V) {
@@ -186,6 +191,11 @@ inline static uint32_t murmur_hash(key_t h) {
 
 void *thread_routine(void *in_args) {
   thread_arg_t *args = (thread_arg_t *)in_args;
+  pthread_mutex_lock(args->mutex_start);
+  while(!*args->start) {
+    pthread_cond_wait(args->cond_start, args->mutex_start);
+  }
+  pthread_mutex_unlock(args->mutex_start);
   int res = bellman(args->H, args->G, args->source, args->dest);
   
   *(args->write_result) = res;
@@ -257,16 +267,21 @@ int main(int argc, char *argv[]) {
 
   read_test_case(input_filename, &G, &source, &dest, &refsol);
 
-  htable_t H = ht_new(1000000, murmur_hash);
+  htable_t H = ht_new(pow(2,24), murmur_hash);
   
   pthread_cond_t cond;
   pthread_mutex_t mutex;
+  pthread_cond_t cond_start;
+  pthread_mutex_t mutex_start;
   int done_thread = -1;
   assert(pthread_cond_init(&cond, NULL) == 0);
   assert(pthread_mutex_init(&mutex, NULL) == 0);
+  assert(pthread_cond_init(&cond_start, NULL) == 0);
+  assert(pthread_mutex_init(&mutex_start, NULL) == 0);
+
+  bool should_start = false;
 
   // TIME ENTRY
-  auto start = std::chrono::high_resolution_clock::now();
 
   // Spawn threads to all compute the knapsack problem
   vector<pthread_t> threads(num_threads);
@@ -275,6 +290,9 @@ int main(int argc, char *argv[]) {
   for (int i = 0; i < num_threads; i++) {
     td[i].cond = &cond;
     td[i].mutex = &mutex;
+    td[i].cond_start = &cond_start;
+    td[i].mutex_start = &mutex_start;
+    td[i].start = &should_start;
     td[i].done_thread = &done_thread;
     td[i].thread_id = i;
     td[i].H = H;
@@ -284,6 +302,12 @@ int main(int argc, char *argv[]) {
     td[i].dest = dest;
     pthread_create(&threads[i], NULL, thread_routine, &td[i]);
   }
+
+  pthread_mutex_lock(&mutex_start);
+  auto start = std::chrono::high_resolution_clock::now();
+  should_start = true;
+  pthread_mutex_unlock(&mutex_start);
+  pthread_cond_broadcast(&cond_start);
 
   // Wait for one thread to finish execution
   int final_result;
