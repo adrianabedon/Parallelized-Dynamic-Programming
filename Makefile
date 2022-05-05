@@ -1,7 +1,7 @@
 # Compiles htable testing and dp-solver given a DP target (i.e. knapsack)
 
 CXX = g++
-CXXFLAGS = -g -std=c++11 -lpthread -pedantic -Wall -Wextra -Werror -Wconversion -Wshadow -Wunreachable-code
+CXXFLAGS = -std=c++11 -lpthread -pedantic -Wall -Wextra -Werror -Wconversion -Wshadow -Wunreachable-code
 OBJS = htable/htable.o
 TARGETS = knapsack.cpp bellman.cpp
 TEST_GENS = knapsack_test_gen.cpp bellman_test_gen.cpp

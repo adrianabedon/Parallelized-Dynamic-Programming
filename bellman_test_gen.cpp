@@ -12,31 +12,53 @@
 
 using namespace std;
 
-void generate_random_graph(int num_vertices, int num_edges, int max_weight, vector<vector<int> > &graph) {
+void generate_random_graph(int num_vertices, int *num_edges, int max_weight, vector<vector<int> > &graph) {
     random_device dev;
     mt19937 rng(dev());
-    uniform_int_distribution<mt19937::result_type> rand_vertex(0, num_vertices-1);
+    // uniform_int_distribution<mt19937::result_type> rand_vertex(0, num_vertices-1);
     uniform_int_distribution<mt19937::result_type> rand_weight(1, max_weight);
+    uniform_int_distribution<mt19937::result_type> rand_prob(1, 100);
 
-    int i = 0;
-    while (i < num_edges) {
-        graph[i][0] = (int)rand_vertex(rng);
-        graph[i][1] = (int)rand_vertex(rng);
-        graph[i][2] = (int)rand_weight(rng);
-
-        // Disallow self loops
-        if (graph[i][0] == graph[i][1])
-            continue;
-        
-        // Check if the edge is already represented
-        for (int j = 0; j < i; j++) {
-            // Already have this directed edge
-            if (graph[i][0] == graph[j][0] && graph[i][1] == graph[j][1])
-                i--;
+    int gi = 0;
+    for(int i = 0 ; i < num_vertices ; i++) {
+        for(int j = 0 ; j < num_vertices ; j++) {
+            if(i == j) 
+            {
+                continue;
+            }
+            if(rand_prob(rng) <= 75) 
+            {
+                vector<int> edge (3);
+                edge[0] = i;
+                edge[1] = j;
+                edge[2] = (int)rand_weight(rng);
+                graph.push_back(edge);
+                gi++;
+            }
         }
-
-        i++;
     }
+
+    *num_edges = gi;
+
+    // int i = 0;
+    // while (i < num_edges) {
+    //     graph[i][0] = (int)rand_vertex(rng);
+    //     graph[i][1] = (int)rand_vertex(rng);
+    //     graph[i][2] = (int)rand_weight(rng);
+
+    //     // Disallow self loops
+    //     if (graph[i][0] == graph[i][1])
+    //         continue;
+        
+    //     // Check if the edge is already represented
+    //     for (int j = 0; j < i; j++) {
+    //         // Already have this directed edge
+    //         if (graph[i][0] == graph[j][0] && graph[i][1] == graph[j][1])
+    //             i--;
+    //     }
+
+    //     i++;
+    // }
 }
 
 /* Sourced from the Crazy Programmer */
@@ -77,20 +99,20 @@ bool ref_bellman(int num_vertices, int num_edges, int source, vector<vector<int>
 
 int main() {
     // Number of vertices in graph
-    int num_vertices = 100;
+    int num_vertices = 2000;
     // Max weight an edge can have
     int max_weight = 300;
     // Density of graph (can range from 0 to 1)
-    double density = 0.75;
+    // double density = 0.75;
     // Computed number of edges based on density for a directed graph
-    int num_edges = (int) (density * (num_vertices) * (num_vertices-1));
+    int num_edges; //= (int) (density * (num_vertices) * (num_vertices-1));
 
     // Each edge is a vector of (u,v,w) = (vertex 1, vertex 2, weight of edge)
-    vector<int> edge (3);
-    vector<vector<int> > graph (num_edges, edge);
+    
+    vector<vector<int> > graph;
 
     // Randomly generate graph
-    generate_random_graph(num_vertices, num_edges, max_weight, graph);
+    generate_random_graph(num_vertices, &num_edges, max_weight, graph);
 
     // Create test file
     char *test_name = new char[100];

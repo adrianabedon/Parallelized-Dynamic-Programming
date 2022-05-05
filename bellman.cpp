@@ -267,7 +267,7 @@ int main(int argc, char *argv[]) {
 
   read_test_case(input_filename, &G, &source, &dest, &refsol);
 
-  htable_t H = ht_new(pow(2,24), murmur_hash);
+  htable_t H = ht_new(pow(2,30), murmur_hash);
   
   pthread_cond_t cond;
   pthread_mutex_t mutex;
@@ -303,6 +303,7 @@ int main(int argc, char *argv[]) {
     pthread_create(&threads[i], NULL, thread_routine, &td[i]);
   }
 
+  printf("Starting computation\n");
   pthread_mutex_lock(&mutex_start);
   auto start = std::chrono::high_resolution_clock::now();
   should_start = true;
